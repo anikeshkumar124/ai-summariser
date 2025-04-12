@@ -15,7 +15,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { initializeApp, getApps } from "firebase/app";
-import * as pdfjs from 'pdfjs-dist';
+import * as firebase from 'firebase/app';
 
 // Firebase configuration (replace with your own)
 const firebaseConfig = {
@@ -45,58 +45,40 @@ export default function Home() {
   let app;
   let auth;
 
-  if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
-    if (getApps().length === 0) {
-      try {
-        if (
-          process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
-          process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
-          process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
-          process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET &&
-          process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID &&
-          process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-        ) {
-          console.log("firebaseConfig:", firebaseConfig);
-          app = initializeApp(firebaseConfig);
+  useEffect(() => {
+    if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
+      if (!firebase.getApps().length) {
+        try {
+          app = firebase.initializeApp(firebaseConfig);
           auth = getAuth(app);
-        } else {
-          console.error("Firebase configuration is incomplete.");
+        } catch (error: any) {
+          console.error("Firebase initialization error:", error.message);
           if (toast) {
             toast({
               variant: "destructive",
-              title: "Firebase Configuration Error",
-              description: "Firebase configuration is incomplete. Please configure all Firebase environment variables.",
+              title: "Firebase Initialization Error",
+              description: error.message || "Failed to initialize Firebase.",
             });
           }
-          return;
         }
-      } catch (error: any) {
-        console.error("Firebase initialization error:", error.message);
-        if (toast) {
-          toast({
-            variant: "destructive",
-            title: "Firebase Initialization Error",
-            description: error.message || "Failed to initialize Firebase.",
-          });
-        }
+      } else {
+        app = firebase.getApps()[0];
+        auth = getAuth(app);
       }
     } else {
-      app = getApps()[0];
-      auth = getAuth(app);
+      console.error("Firebase configuration is not set.");
+      if (toast) {
+        toast({
+          variant: "destructive",
+          title: "Firebase Configuration Error",
+          description: "Firebase configuration is not set. Please configure Firebase environment variables.",
+        });
+      }
     }
-  } else {
-    console.error("Firebase configuration is not set.");
-    if (toast) {
-      toast({
-        variant: "destructive",
-        title: "Firebase Configuration Error",
-        description: "Firebase configuration is not set. Please configure Firebase environment variables.",
-      });
-    }
-  }
+  }, []);
 
-    useEffect(() => {
-      let unsubscribe;
+  useEffect(() => {
+    let unsubscribe;
     if (auth) {
       unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -109,11 +91,26 @@ export default function Home() {
       });
     } else {
       console.error("Auth object is not available.");
-    }    
+    }
     return () => {
       if (unsubscribe) unsubscribe();
     };
   }, [auth]);
+
+  useEffect(() => {
+    const loadPdfJs = async () => {
+      try {
+        const pdfjsLib = await import('pdfjs-dist');
+        // @ts-ignore
+        pdfjsLib.GlobalWorkerOptions.workerSrc = window.location.origin + '/pdf.worker.min.js';
+      } catch (error) {
+        console.error('Failed to load pdfjs-dist', error);
+      }
+    };
+
+    loadPdfJs();
+  }, []);
+
 
   const registerUser = async (email, password) => {
     if (auth) {
@@ -185,51 +182,6 @@ export default function Home() {
     } catch (error: any) {
       if (toast) {
         toast({ variant: "destructive", title: "Logout Error", description: error.message });
-      }
-    }
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type === "application/pdf") {
-      setSelectedFile(file);
-      
-      try {
-        const reader = new FileReader();
-        reader.onload = async () => {
-          if (reader.result instanceof ArrayBuffer) {
-            const pdfData = new Uint8Array(reader.result);
-            
-          if (typeof window !== 'undefined') {
-            const pdfjsLib = await import('pdfjs-dist');
-            // @ts-ignore
-            pdfjsLib.GlobalWorkerOptions.workerSrc = window.location.origin + '/pdf.worker.min.js';
-            const pdf = await pdfjsLib.getDocument(pdfData).promise;
-            let fullText = "";
-            for (let i = 1; i <= pdf.numPages; i++) {
-              const page = await pdf.getPage(i);
-              const textContent = await page.getTextContent();
-              fullText += textContent.items.map(item => item.str).join(' ');
-            }
-
-            console.log('Extracted Text:', fullText);
-            setNote(fullText);
-            
-          } else {
-            console.log('You are not on the client');
-          }
-          }
-        };
-        reader.readAsArrayBuffer(file);
-      } catch (error:any) {
-        console.error('Error reading PDF:', error);
-        if (toast) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: error.message || "Failed to read PDF.",
-          });
-        }
       }
     }
   };
@@ -324,13 +276,6 @@ export default function Home() {
                   onChange={(e) => setNote(e.target.value)}
                   className="resize-none shadow-sm"
                 />
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  id="pdf-upload"
-                  onChange={handleFileChange}
-                  className="mt-4"
-                />
               </CardContent>
             </Card>
 
@@ -386,5 +331,3 @@ export default function Home() {
     </div>
   );
 }
-
-
