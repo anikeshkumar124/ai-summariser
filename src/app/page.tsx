@@ -47,8 +47,25 @@ export default function Home() {
   if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
     if (getApps().length === 0) {
       try {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
+        if (
+          process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
+          process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
+          process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
+          process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET &&
+          process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID &&
+          process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+        ) {
+          app = initializeApp(firebaseConfig);
+          auth = getAuth(app);
+        } else {
+          console.error("Firebase configuration is incomplete.");
+          toast({
+            variant: "destructive",
+            title: "Firebase Configuration Error",
+            description: "Firebase configuration is incomplete. Please configure all Firebase environment variables.",
+          });
+          return;
+        }
       } catch (error: any) {
         console.error("Firebase initialization error:", error.message);
         toast({
