@@ -1,5 +1,4 @@
 "use client";
-import { read } from "fs";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { summarizeNote } from "@/ai/flows/summarize-note";
@@ -200,7 +199,12 @@ export default function Home() {
         reader.onload = async () => {
           if (reader.result instanceof ArrayBuffer) {
             const pdfData = new Uint8Array(reader.result);
-            const pdf = await pdfjs.getDocument(pdfData).promise;
+            
+          if (typeof window !== 'undefined') {
+            const pdfjsLib = await import('pdfjs-dist');
+            // @ts-ignore
+            pdfjsLib.GlobalWorkerOptions.workerSrc = window.location.origin + '/pdf.worker.min.js';
+            const pdf = await pdfjsLib.getDocument(pdfData).promise;
             let fullText = "";
             for (let i = 1; i <= pdf.numPages; i++) {
               const page = await pdf.getPage(i);
@@ -211,6 +215,9 @@ export default function Home() {
             console.log('Extracted Text:', fullText);
             setNote(fullText);
             
+          } else {
+            console.log('You are not on the client');
+          }
           }
         };
         reader.readAsArrayBuffer(file);
@@ -323,9 +330,6 @@ export default function Home() {
                   id="pdf-upload"
                   onChange={handleFileChange}
                   className="mt-4"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  className="resize-none shadow-sm"
                 />
               </CardContent>
             </Card>
@@ -382,6 +386,5 @@ export default function Home() {
     </div>
   );
 }
-
 
 
