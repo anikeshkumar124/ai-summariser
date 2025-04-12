@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+// import { motion, AnimatePresence } from "framer-motion";
 import { summarizeNote } from "@/ai/flows/summarize-note";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -259,7 +259,7 @@ export default function Home() {
                       <CardTitle className="text-lg md:text-2xl">Summary</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <AnimatePresence>
+                      {/* <AnimatePresence>
                         {summary && (
                           <motion.div
                             key="summary-content"
@@ -272,7 +272,14 @@ export default function Home() {
                             {summary}
                           </motion.div>
                         )}
-                      </AnimatePresence>
+                      </AnimatePresence> */}
+                      {summary && (
+                        
+                          
+                            {summary}
+                          
+                        
+                      )}
 
                       <div className="flex justify-end space-x-2">
                         <Button
