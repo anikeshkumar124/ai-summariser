@@ -15,17 +15,24 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'NoteFlow Summarizer',
   description: 'Summarize your notes with AI',
+  // Optionally add other meta tags here
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-cover bg-center`}
+        style={{
+          backgroundAttachment: 'fixed',
+          padding: 0,
+          height: '100vh',
+          width: '100vw',
+        }}
+      >
+        <div className="bg-white bg-opacity-80 min-h-screen flex justify-center items-center">
+          {children}
+        </div>
       </body>
     </html>
   );

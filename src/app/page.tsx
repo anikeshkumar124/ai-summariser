@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { summarizeNote } from "@/ai/flows/summarize-note";
@@ -8,17 +9,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Download } from "lucide-react";
 import {
-  getAuth, User,
+  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  User,
 } from "firebase/auth";
 import { initializeApp, getApps } from "firebase/app";
-import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
+import React from "react";
 
-// Firebase configuration (replace with your own)
+// Firebase configuration (replace with your actual env vars)
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -37,15 +39,11 @@ try {
     auth = getAuth(app);
   } else {
     app = getApps()[0];
-    if (auth === undefined) {
-      auth = getAuth(app);
-    }
+    auth = getAuth(app);
   }
 } catch (e: any) {
   console.error("Firebase initialization error:", e.message);
-  if (firebaseConfig.apiKey === undefined || firebaseConfig.authDomain === undefined || firebaseConfig.projectId === undefined || firebaseConfig.storageBucket === undefined || firebaseConfig.messagingSenderId === undefined || firebaseConfig.appId === undefined){
-    console.error("Firebase configuration is incomplete.");
-  }
+  console.error("Firebase configuration might be incomplete.");
 }
 
 export default function Home() {
@@ -55,84 +53,51 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const router = useRouter();
-  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
+  const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
-    let unsubscribe;
     if (auth) {
-      unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          setIsLoggedIn(true);
-          setUser(user)
-        } else {
-          setIsLoggedIn(false);
-        }
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setUser(user);
+        setIsLoggedIn(!!user);
       });
-    } else {
-      console.error("Auth object is not available.");
+      return () => unsubscribe();
     }
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
   }, []);
 
-  const registerUser = async (email, password) => {
-    if (auth) {
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        toast({
-          title: "Account Created",
-          description: `User ${user.email} created successfully.`,
-        });
-      } catch (error: any) {
-        if (error.code === "auth/email-already-in-use") {
-          toast({
-            variant: "destructive",
-            title: "Registration Error",
-            description: "This email is already registered.",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Registration Error",
-            description: error.message || "Failed to create account.",
-          });
-        }
-      }
-    } else {
-      console.error("Auth object is not available.");
+  const registerUser = async (email: string, password: string) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Account Created",
+        description: `User ${userCredential.user.email} created successfully.`,
+      });
+    } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Firebase Auth Error",
-        description: "Firebase Auth is not initialized.",
+        title: "Registration Error",
+        description:
+          error.code === "auth/email-already-in-use"
+            ? "This email is already registered."
+            : error.message,
       });
     }
   };
 
-  const loginUser = async (email, password) => {
-    if (auth) {
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        toast({
-          title: "Logged In",
-          description: `Logged in as ${user.email}.`,
-        });
-      } catch (error: any) {
-        toast({
-          variant: "destructive",
-          title: "Login Error",
-          description: error.message || "Failed to login.",
-        });
-      }
+  const loginUser = async (email: string, password: string) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Logged In",
+        description: `Logged in as ${userCredential.user.email}.`,
+      });
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Login Error",
-        description: error.message || "Failed to login.",
+        description: error.message,
       });
     }
   };
@@ -149,9 +114,7 @@ export default function Home() {
   const handleSummarize = async () => {
     setIsSummarizing(true);
     try {
-      const textToSummarize = note;
-
-      const result = await summarizeNote({ note: textToSummarize });
+      const result = await summarizeNote({ note });
       setSummary(result.summary || "Failed to Summarize");
       toast({
         title: "Summary Generated",
@@ -161,7 +124,7 @@ export default function Home() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to generate summary.",
+        description: error.message,
       });
     } finally {
       setIsSummarizing(false);
@@ -169,144 +132,108 @@ export default function Home() {
   };
 
   const handleDownload = () => {
-    const element = document.createElement("a");
     const file = new Blob([summary], { type: "text/plain" });
+    const element = document.createElement("a");
     element.href = URL.createObjectURL(file);
     element.download = "summary.txt";
-    document.body.appendChild(element); // Required for this to work in FireFox
+    document.body.appendChild(element);
     element.click();
   };
 
   const handleCopyToClipboard = () => {
     navigator.clipboard.writeText(summary);
-    toast({
-      description: "Summary copied to clipboard",
-    });
+    toast({ description: "Summary copied to clipboard" });
   };
 
   return (
-    <>
-      
-      <div className="flex flex-col items-center justify-start min-h-screen py-12 bg-background space-y-8">
-        
-        <div className="text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground drop-shadow-md">
-            NoteFlow Summarizer
-          </h1>
+    <div className="flex flex-col items-center justify-start min-h-screen p-12 bg-background space-y-8 w-screen">
+      <div className="text-center">
+        <h1 className="text-4xl md:text-6xl font-bold text-foreground drop-shadow-md">
+          Epitomize.AI Summarizer
+        </h1>
+      </div>
+
+      {!isLoggedIn ? (
+        <div className="space-y-4 text-foreground text-sm md:text-base">
+          <input
+            type="email"
+            placeholder="Email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border p-2 rounded"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="border p-2 rounded"
+          />
+          <div className="flex space-x-2">
+            <Button onClick={() => loginUser(email, password)} className="text-white">
+              Login
+            </Button>
+            <Button variant="secondary" onClick={() => registerUser(email, password)}>
+              Register
+            </Button>
+          </div>
         </div>
+      ) : (
+        <div className="space-y-6 md:space-y-8 w-screen max-w-5xl text-center">
+          <p className="text-foreground">Logged in as: {user?.email}</p>
 
-
-        <div>
-          {!isLoggedIn ? (
-            <div className="space-y-4 text-foreground text-sm md:text-base">
-              <input
-                type="email"
-                placeholder="Email"
-                aria-label="Email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="border p-2 rounded"
+          <Card className="bg-card-background border border-border shadow-md w-3/4 m-32">
+            <CardHeader>
+              <CardTitle className="text-lg md:text-2xl">Enter your note</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder="Paste your note here..."
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                className="resize-none shadow-sm bg-white text-foreground w-5/6 mx-16 my-8"
               />
-              <input
-                type="password"
-                placeholder="Password"
-                aria-label="Password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="border p-2 rounded"
-              />
-              <div className="flex space-x-2">
-                <Button onClick={() => loginUser(email, password)}>Login</Button>
-                <Button variant="secondary" onClick={() => registerUser(email, password)}>
-                  Register
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="space-y-6 md:space-y-8 w-full max-w-3xl">
-                <div className="text-foreground">
-                  <p>Logged in as: {user?.email}</p>
-                </div>
-                <Card className="bg-card-background border border-border shadow-md">
-                  <CardHeader>
-                    <CardTitle className="text-lg md:text-2xl">Enter your note</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Textarea
-                      placeholder="Paste your note here..."
-                      aria-label="Note Textarea"
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      className="resize-none shadow-sm bg-card-foreground text-foreground"
-                    />
-                  </CardContent>
-                </Card>
+            </CardContent>
+          </Card>
 
-                <div className="flex justify-center">
-                  <Button
-                    aria-label="Summarize"
-                    onClick={handleSummarize}
-                    disabled={isSummarizing || !note}
-                  >
-                    {isSummarizing ? "Summarizing..." : "Summarize"}
+          <div className="flex justify-center">
+            <Button onClick={handleSummarize} disabled={isSummarizing || !note}>
+              {isSummarizing ? "Summarizing..." : "Summarize"}
+            </Button>
+          </div>
+
+          {summary && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg md:text-2xl">Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p>{summary}</p>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" size="icon" onClick={handleCopyToClipboard}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button variant="secondary" onClick={handleDownload}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
                   </Button>
                 </div>
-
-                {summary && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg md:text-2xl">Summary</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      
-                      {summary && (
-                        
-                          
-                            {summary}
-                          
-                        
-                      )}
-
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={handleCopyToClipboard}
-                          className="hover:bg-accent/10"
-                        >
-                          <Copy className="h-4 w-4" />
-                          <span className="sr-only">Copy to clipboard</span>
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          onClick={handleDownload}
-                          className="bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-
-                <Button
-                  aria-label="Logout"
-                  onClick={logoutUser}
-                >
-                  Logout
-                </Button>
-              </div>
-            </>
+              </CardContent>
+            </Card>
           )}
+
+          <Button
+            onClick={logoutUser}
+            className="w-5/6 max-w-xs text-white hover:bg-red-600 active:bg-red-700 focus:ring-2 focus:ring-primary transition-all duration-200"
+          >
+            Logout
+          </Button>
         </div>
-        <Toaster />
-      </div>
-    </>
+      )}
+
+      <Toaster />
+    </div>
   );
 }
-

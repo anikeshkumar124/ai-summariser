@@ -1,89 +1,114 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 200 20% 96%; /* Neutral gray */
+    --background: 200 20% 96%;
     --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%; /* White */
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%; /* White */
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 180 100% 25%; /* Teal */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%; /* Light gray */
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%; /* Light gray */
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 180 100% 25%; /* Teal */
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --input-background: 0 0% 98%;
+    --input-foreground: 0 0% 9%;
     --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --muted-foreground: 0 0% 45.1%;
+    --primary: 180 100% 25%;
+    --primary-hover: 180 100% 18%;
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-}
 
-@layer base {
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 15%;
+    --card-foreground: 0 0% 98%;
+    --input-background: 0 0% 20%;
+    --input-foreground: 0 0% 90%;
+    --border: 0 0% 30%;
+    --muted-foreground: 0 0% 60%;
+    --primary: 180 100% 40%;
+    --primary-hover: 180 100% 30%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased min-h-screen p-6;
+    background-color: hsl(var(--background));
+  }
+
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  input,
+  textarea,
+  select {
+    background-color: hsl(var(--input-background));
+    color: hsl(var(--input-foreground));
+    border: 1px solid hsl(var(--border));
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    width: 100%;
+    transition: all 0.2s ease-in-out;
+    @apply shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 0.7;
+  }
+
+  button {
+    background-color: hsl(var(--primary));
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+    @apply hover:bg-[hsl(var(--primary-hover))] shadow;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-foreground;
+  }
+}
+
+@layer components {
+  .container-center {
+    @apply max-w-xl mx-auto;
+  }
+
+  .card {
+    @apply bg-card text-card-foreground p-6 rounded-2xl shadow-md border;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-group {
+    @apply mb-4;
+  }
+
+  .form-label {
+    @apply block mb-2 text-sm font-medium text-muted-foreground;
+  }
+
+  .btn {
+    @apply px-4 py-2 text-white rounded-md font-semibold shadow transition;
+    background-color: hsl(var(--primary));
+  }
+
+  .btn:hover {
+    background-color: hsl(var(--primary-hover));
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 2px hsl(var(--primary));
   }
 }
