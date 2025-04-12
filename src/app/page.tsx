@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-// import { motion, AnimatePresence } from "framer-motion";
 import { summarizeNote } from "@/ai/flows/summarize-note";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,7 +42,10 @@ try {
     }
   }
 } catch (e: any) {
-  console.error('initializeApp-error', e);
+  console.error("Firebase initialization error:", e.message);
+  if (firebaseConfig.apiKey === undefined || firebaseConfig.authDomain === undefined || firebaseConfig.projectId === undefined || firebaseConfig.storageBucket === undefined || firebaseConfig.messagingSenderId === undefined || firebaseConfig.appId === undefined){
+    console.error("Firebase configuration is incomplete.");
+  }
 }
 
 export default function Home() {
@@ -185,8 +187,8 @@ export default function Home() {
   return (
     <>
       
-      <div className="flex flex-col items-center justify-center min-h-screen py-12 bg-background space-y-8">
-
+      <div className="flex flex-col items-center justify-start min-h-screen py-12 bg-background space-y-8">
+        
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-foreground drop-shadow-md">
             NoteFlow Summarizer
@@ -259,20 +261,7 @@ export default function Home() {
                       <CardTitle className="text-lg md:text-2xl">Summary</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {/* <AnimatePresence>
-                        {summary && (
-                          <motion.div
-                            key="summary-content"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.5 }}
-                            className="whitespace-pre-line"
-                          >
-                            {summary}
-                          </motion.div>
-                        )}
-                      </AnimatePresence> */}
+                      
                       {summary && (
                         
                           
@@ -320,3 +309,4 @@ export default function Home() {
     </>
   );
 }
+
