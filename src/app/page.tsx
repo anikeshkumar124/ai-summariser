@@ -1,20 +1,22 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { summarizeNote } from "@/ai/flows/summarize-note";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Download } from "lucide-react";
 import {
-  getAuth,
+  getAuth, User,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
 import { initializeApp, getApps } from "firebase/app";
+import React from 'react';
 
 // Firebase configuration (replace with your own)
 const firebaseConfig = {
@@ -28,24 +30,19 @@ const firebaseConfig = {
 
 // Initialize Firebase app only once
 let app;
+let auth;
 try {
   if (!getApps().length) {
     app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
   } else {
     app = getApps()[0];
+    if (auth === undefined) {
+      auth = getAuth(app);
+    }
   }
 } catch (e: any) {
   console.error('initializeApp-error', e);
-}
-
-// Initialize Firebase auth
-let auth;
-try {
-  if (app) {
-    auth = getAuth(app);
-  }
-} catch (e: any) {
-  console.error('getAuth-error', e);
 }
 
 export default function Home() {
@@ -57,6 +54,7 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     let unsubscribe;
@@ -64,6 +62,7 @@ export default function Home() {
       unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
           setIsLoggedIn(true);
+          setUser(user)
         } else {
           setIsLoggedIn(false);
         }
@@ -111,13 +110,21 @@ export default function Home() {
   };
 
   const loginUser = async (email, password) => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      toast({
-        title: "Logged In",
-        description: `Logged in as ${user.email}.`,
-      });
+    if (auth) {
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        toast({
+          title: "Logged In",
+          description: `Logged in as ${user.email}.`,
+        });
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Login Error",
+          description: error.message || "Failed to login.",
+        });
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -175,14 +182,31 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-screen py-12 bg-background space-y-8">
-      <h1 className="text-3xl font-semibold text-foreground">NoteFlow Summarizer</h1>
+    <div className="relative flex flex-col items-center justify-start min-h-screen py-12 bg-background space-y-8">
+        {/* Student Image Background */}
+        <div className="absolute inset-0 z-0 flex justify-center items-center overflow-hidden">
+          <img
+            src="/student-bg.jpg"
+            alt="Student Background"
+            className="object-cover w-full h-full opacity-30 scale-150"
+            />
+        </div>
 
-      {!isLoggedIn ? (
-        <div className="space-y-4">
+        <div className="z-10 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground drop-shadow-md">
+            NoteFlow Summarizer
+          </h1>
+        </div>
+      
+
+      <div className="z-10">
+      {!isLoggedIn ? (       
+        <div className="space-y-4 text-foreground text-sm md:text-base">
           <input
             type="email"
             placeholder="Email"
+            aria-label="Email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="border p-2 rounded"
@@ -190,6 +214,8 @@ export default function Home() {
           <input
             type="password"
             placeholder="Password"
+            aria-label="Password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="border p-2 rounded"
@@ -203,27 +229,37 @@ export default function Home() {
         </div>
       ) : (
         <>
-          <div className="w-full max-w-3xl space-y-4">
-            <Card>
+        <div className="space-y-6 md:space-y-8 z-10 w-full max-w-3xl">
+            <div className="text-foreground">
+              <p>Logged in as: {user?.email}</p>
+            </div>
+            <Card className="bg-card-background border border-border shadow-md">
               <CardHeader>
-                <CardTitle>Enter your note</CardTitle>
-                <CardDescription>Paste a long note or paragraph to summarize.</CardDescription>
+                <CardTitle className="text-lg md:text-2xl">Enter your note</CardTitle>
               </CardHeader>
               <CardContent>
                 <Textarea
                   placeholder="Paste your note here..."
+                  aria-label="Note Textarea"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  className="resize-none shadow-sm"
+                  className="resize-none shadow-sm bg-card-foreground text-foreground"
                 />
               </CardContent>
             </Card>
 
             <div className="flex justify-center">
               <Button
+                aria-label="Summarize"
                 onClick={handleSummarize}
                 disabled={isSummarizing || !note}
-                className="bg-accent text-accent-foreground hover:bg-teal-700 shadow-md"
+                className={`
+                  bg-accent
+                  text-accent-foreground 
+                  hover:bg-teal-700 
+                  shadow-md
+                  ${isSummarizing ? "cursor-wait" : "cursor-pointer"}
+                `}
               >
                 {isSummarizing ? "Summarizing..." : "Summarize"}
               </Button>
@@ -231,12 +267,25 @@ export default function Home() {
 
             {summary && (
               <Card>
-                <CardHeader>
-                  <CardTitle>Summary</CardTitle>
-                  <CardDescription>Concise summary generated by AI.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="whitespace-pre-line">{summary}</div>
+                  <CardHeader>
+                    <CardTitle className="text-lg md:text-2xl">Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                  <AnimatePresence>
+                    {summary && (
+                      <motion.div
+                        key="summary-content"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="whitespace-pre-line"
+                      >
+                        {summary}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   <div className="flex justify-end space-x-2">
                     <Button
                       variant="outline"
@@ -258,14 +307,18 @@ export default function Home() {
                   </div>
                 </CardContent>
               </Card>
-            )}
-          </div>
+              )}
+
+          
           <Button
+            aria-label="Logout"
             onClick={logoutUser}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md"
+            
           >
             Logout
           </Button>
+        </div>
         </>
       )}
     </div>
