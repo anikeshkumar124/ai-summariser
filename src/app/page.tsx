@@ -27,28 +27,6 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-let app;
-let auth;
-
-if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
-  if (getApps().length === 0) {
-    try {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-    } catch (error: any) {
-      console.error("Firebase initialization error:", error.message);
-      // Consider showing a toast here to inform the user
-    }
-  } else {
-    app = getApps()[0];
-    auth = getAuth(app);
-  }
-} else {
-  console.error("Firebase configuration is not set.");
-  // Handle the case where Firebase is not configured
-}
-
 
 
 // Home component
@@ -61,6 +39,36 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+
+  // Initialize Firebase
+  let app;
+  let auth;
+
+  if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
+    if (getApps().length === 0) {
+      try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+      } catch (error: any) {
+        console.error("Firebase initialization error:", error.message);
+        toast({
+          variant: "destructive",
+          title: "Firebase Initialization Error",
+          description: error.message || "Failed to initialize Firebase.",
+        });
+      }
+    } else {
+      app = getApps()[0];
+      auth = getAuth(app);
+    }
+  } else {
+    console.error("Firebase configuration is not set.");
+    toast({
+      variant: "destructive",
+      title: "Firebase Configuration Error",
+      description: "Firebase configuration is not set. Please configure Firebase environment variables.",
+    });
+  }
 
   useEffect(() => {
     let unsubscribe;
@@ -78,7 +86,7 @@ export default function Home() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [auth]);
 
   const registerUser = async (email, password) => {
     try {
