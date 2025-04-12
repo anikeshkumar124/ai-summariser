@@ -15,7 +15,7 @@ import {
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 
 // Firebase configuration (replace with your own)
 const firebaseConfig = {
@@ -28,18 +28,28 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app, auth;
-if (
-  process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
-  process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
-  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
-  process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET &&
-  process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID &&
-  process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-) {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
+let app;
+let auth;
+
+if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
+  if (getApps().length === 0) {
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+    } catch (error: any) {
+      console.error("Firebase initialization error:", error.message);
+      // Consider showing a toast here to inform the user
+    }
+  } else {
+    app = getApps()[0];
+    auth = getAuth(app);
+  }
+} else {
+  console.error("Firebase configuration is not set.");
+  // Handle the case where Firebase is not configured
 }
+
+
 
 // Home component
 export default function Home() {
@@ -53,14 +63,21 @@ export default function Home() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setIsLoggedIn(true);
-      } else {
-        setIsLoggedIn(false);
-      }
-    });
-    return () => unsubscribe();
+    let unsubscribe;
+    if (auth) {
+      unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+      });
+    } else {
+      console.error("Auth object is not available.");
+    }
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const registerUser = async (email, password) => {
@@ -236,8 +253,6 @@ export default function Home() {
           </Button>
         </>
       )}
-    
-      </div>
+    </div>
   );
 }
-
