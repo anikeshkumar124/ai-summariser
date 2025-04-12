@@ -59,20 +59,24 @@ export default function Home() {
           auth = getAuth(app);
         } else {
           console.error("Firebase configuration is incomplete.");
-          toast({
-            variant: "destructive",
-            title: "Firebase Configuration Error",
-            description: "Firebase configuration is incomplete. Please configure all Firebase environment variables.",
-          });
+          if (toast) {
+            toast({
+              variant: "destructive",
+              title: "Firebase Configuration Error",
+              description: "Firebase configuration is incomplete. Please configure all Firebase environment variables.",
+            });
+          }
           return;
         }
       } catch (error: any) {
         console.error("Firebase initialization error:", error.message);
-        toast({
-          variant: "destructive",
-          title: "Firebase Initialization Error",
-          description: error.message || "Failed to initialize Firebase.",
-        });
+        if (toast) {
+          toast({
+            variant: "destructive",
+            title: "Firebase Initialization Error",
+            description: error.message || "Failed to initialize Firebase.",
+          });
+        }
       }
     } else {
       app = getApps()[0];
@@ -80,11 +84,13 @@ export default function Home() {
     }
   } else {
     console.error("Firebase configuration is not set.");
-    toast({
-      variant: "destructive",
-      title: "Firebase Configuration Error",
-      description: "Firebase configuration is not set. Please configure Firebase environment variables.",
-    });
+    if (toast) {
+      toast({
+        variant: "destructive",
+        title: "Firebase Configuration Error",
+        description: "Firebase configuration is not set. Please configure Firebase environment variables.",
+      });
+    }
   }
 
   useEffect(() => {
