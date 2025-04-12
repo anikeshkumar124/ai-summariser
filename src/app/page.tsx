@@ -15,7 +15,6 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { initializeApp, getApps } from "firebase/app";
-import * as firebase from 'firebase/app';
 
 // Firebase configuration (replace with your own)
 const firebaseConfig = {
@@ -82,22 +81,18 @@ export default function Home() {
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        if (toast) {
-          toast({
-            title: "Account Created",
-            description: `User ${user.email} created successfully.`,
-          });
-        }
+        toast({
+          title: "Account Created",
+          description: `User ${user.email} created successfully.`,
+        });
       } catch (error: any) {
         if (error.code === "auth/email-already-in-use") {
-          if (toast) {
-            toast({
-              variant: "destructive",
-              title: "Registration Error",
-              description: "This email is already registered.",
-            });
-          }
-        } else if (toast) {
+          toast({
+            variant: "destructive",
+            title: "Registration Error",
+            description: "This email is already registered.",
+          });
+        } else {
           toast({
             variant: "destructive",
             title: "Registration Error",
@@ -107,13 +102,11 @@ export default function Home() {
       }
     } else {
       console.error("Auth object is not available.");
-      if (toast) {
-        toast({
-          variant: "destructive",
-          title: "Firebase Auth Error",
-          description: "Firebase Auth is not initialized.",
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Firebase Auth Error",
+        description: "Firebase Auth is not initialized.",
+      });
     }
   };
 
@@ -121,33 +114,25 @@ export default function Home() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      if (toast) {
-        toast({
-          title: "Logged In",
-          description: `Logged in as ${user.email}.`,
-        });
-      }
+      toast({
+        title: "Logged In",
+        description: `Logged in as ${user.email}.`,
+      });
     } catch (error: any) {
-      if (toast) {
-        toast({
-          variant: "destructive",
-          title: "Login Error",
-          description: error.message || "Failed to login.",
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Login Error",
+        description: error.message || "Failed to login.",
+      });
     }
   };
 
   const logoutUser = async () => {
     try {
       await signOut(auth);
-      if (toast) {
-        toast({ description: "Logged out successfully." });
-      }
+      toast({ description: "Logged out successfully." });
     } catch (error: any) {
-      if (toast) {
-        toast({ variant: "destructive", title: "Logout Error", description: error.message });
-      }
+      toast({ variant: "destructive", title: "Logout Error", description: error.message });
     }
   };
 
@@ -158,20 +143,16 @@ export default function Home() {
 
       const result = await summarizeNote({ note: textToSummarize });
       setSummary(result.summary || "Failed to Summarize");
-      if (toast) {
-        toast({
-          title: "Summary Generated",
-          description: "The summary has been successfully generated.",
-        });
-      }
+      toast({
+        title: "Summary Generated",
+        description: "The summary has been successfully generated.",
+      });
     } catch (error: any) {
-      if (toast) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message || "Failed to generate summary.",
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to generate summary.",
+      });
     } finally {
       setIsSummarizing(false);
     }
@@ -187,12 +168,10 @@ export default function Home() {
   };
 
   const handleCopyToClipboard = () => {
-    if (toast) {
-      navigator.clipboard.writeText(summary);
-      toast({
-        description: "Summary copied to clipboard",
-      });
-    }
+    navigator.clipboard.writeText(summary);
+    toast({
+      description: "Summary copied to clipboard",
+    });
   };
 
   return (
