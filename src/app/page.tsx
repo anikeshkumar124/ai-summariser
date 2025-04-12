@@ -115,16 +115,20 @@ export default function Home() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      toast({
-        title: "Account Created",
-        description: `User ${user.email} created successfully.`,
-      });
+      if (toast) {
+        toast({
+          title: "Account Created",
+          description: `User ${user.email} created successfully.`,
+        });
+      }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Registration Error",
-        description: error.message || "Failed to create account.",
-      });
+      if (toast) {
+        toast({
+          variant: "destructive",
+          title: "Registration Error",
+          description: error.message || "Failed to create account.",
+        });
+      }
     }
   };
 
@@ -132,25 +136,33 @@ export default function Home() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      toast({
-        title: "Logged In",
-        description: `Logged in as ${user.email}.`,
-      });
+      if (toast) {
+        toast({
+          title: "Logged In",
+          description: `Logged in as ${user.email}.`,
+        });
+      }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Login Error",
-        description: error.message || "Failed to login.",
-      });
+      if (toast) {
+        toast({
+          variant: "destructive",
+          title: "Login Error",
+          description: error.message || "Failed to login.",
+        });
+      }
     }
   };
 
   const logoutUser = async () => {
     try {
       await signOut(auth);
-      toast({ description: "Logged out successfully." });
+      if (toast) {
+        toast({ description: "Logged out successfully." });
+      }
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Logout Error", description: error.message });
+      if (toast) {
+        toast({ variant: "destructive", title: "Logout Error", description: error.message });
+      }
     }
   };
 
@@ -159,16 +171,20 @@ export default function Home() {
     try {
       const result = await summarizeNote({ note });
       setSummary(result.summary || "Failed to Summarize");
-      toast({
-        title: "Summary Generated",
-        description: "The summary has been successfully generated.",
-      });
+      if (toast) {
+        toast({
+          title: "Summary Generated",
+          description: "The summary has been successfully generated.",
+        });
+      }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to generate summary.",
-      });
+      if (toast) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to generate summary.",
+        });
+      }
     } finally {
       setIsSummarizing(false);
     }
@@ -184,10 +200,12 @@ export default function Home() {
   };
 
   const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(summary);
-    toast({
-      description: "Summary copied to clipboard",
-    });
+    if (toast) {
+      navigator.clipboard.writeText(summary);
+      toast({
+        description: "Summary copied to clipboard",
+      });
+    }
   };
 
   return (
@@ -287,3 +305,4 @@ export default function Home() {
     </div>
   );
 }
+
