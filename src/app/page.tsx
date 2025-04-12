@@ -55,6 +55,7 @@ export default function Home() {
           process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID &&
           process.env.NEXT_PUBLIC_FIREBASE_APP_ID
         ) {
+          console.log("firebaseConfig:", firebaseConfig);
           app = initializeApp(firebaseConfig);
           auth = getAuth(app);
         } else {
@@ -112,21 +113,40 @@ export default function Home() {
   }, [auth]);
 
   const registerUser = async (email, password) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      if (toast) {
-        toast({
-          title: "Account Created",
-          description: `User ${user.email} created successfully.`,
-        });
+    if (auth) {
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        if (toast) {
+          toast({
+            title: "Account Created",
+            description: `User ${user.email} created successfully.`,
+          });
+        }
+      } catch (error: any) {
+        if (error.code === "auth/email-already-in-use") {
+          if (toast) {
+            toast({
+              variant: "destructive",
+              title: "Registration Error",
+              description: "This email is already registered.",
+            });
+          }
+        } else if (toast) {
+          toast({
+            variant: "destructive",
+            title: "Registration Error",
+            description: error.message || "Failed to create account.",
+          });
+        }
       }
-    } catch (error: any) {
+    } else {
+      console.error("Auth object is not available.");
       if (toast) {
         toast({
           variant: "destructive",
-          title: "Registration Error",
-          description: error.message || "Failed to create account.",
+          title: "Firebase Auth Error",
+          description: "Firebase Auth is not initialized.",
         });
       }
     }
@@ -305,5 +325,6 @@ export default function Home() {
     </div>
   );
 }
+
 
 
