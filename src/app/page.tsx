@@ -184,25 +184,17 @@ export default function Home() {
 
   return (
     <>
-      {/* Student Image Background */}
-      <div className="relative flex flex-col items-center justify-start min-h-screen py-12 bg-background space-y-8">
-        {/* Student Image Background */}
-        <div className="absolute inset-0 z-0 flex justify-center items-center overflow-hidden">
-          <img
-            src="/student-bg.jpg"
-            alt="Student Background"
-            className="object-cover w-full h-full opacity-30 scale-150"
-          />
-        </div>
+      
+      <div className="flex flex-col items-center justify-center min-h-screen py-12 bg-background space-y-8">
 
-        <div className="z-10 text-center">
+        <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-foreground drop-shadow-md">
             NoteFlow Summarizer
           </h1>
         </div>
 
 
-        <div className="z-10">
+        <div>
           {!isLoggedIn ? (
             <div className="space-y-4 text-foreground text-sm md:text-base">
               <input
@@ -232,7 +224,7 @@ export default function Home() {
             </div>
           ) : (
             <>
-              <div className="space-y-6 md:space-y-8 z-10 w-full max-w-3xl">
+              <div className="space-y-6 md:space-y-8 w-full max-w-3xl">
                 <div className="text-foreground">
                   <p>Logged in as: {user?.email}</p>
                 </div>
@@ -256,13 +248,6 @@ export default function Home() {
                     aria-label="Summarize"
                     onClick={handleSummarize}
                     disabled={isSummarizing || !note}
-                    className={`
-                  bg-accent
-                  text-accent-foreground 
-                  hover:bg-teal-700 
-                  shadow-md
-                  ${isSummarizing ? "cursor-wait" : "cursor-pointer"}
-                `}
                   >
                     {isSummarizing ? "Summarizing..." : "Summarize"}
                   </Button>
@@ -316,8 +301,6 @@ export default function Home() {
                 <Button
                   aria-label="Logout"
                   onClick={logoutUser}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md"
-
                 >
                   Logout
                 </Button>
