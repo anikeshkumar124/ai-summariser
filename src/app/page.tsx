@@ -17,6 +17,7 @@ import {
 } from "firebase/auth";
 import { initializeApp, getApps } from "firebase/app";
 import React from 'react';
+import { Toaster } from "@/components/ui/toaster";
 
 // Firebase configuration (replace with your own)
 const firebaseConfig = {
@@ -182,14 +183,16 @@ export default function Home() {
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-start min-h-screen py-12 bg-background space-y-8">
+    <>
+      {/* Student Image Background */}
+      <div className="relative flex flex-col items-center justify-start min-h-screen py-12 bg-background space-y-8">
         {/* Student Image Background */}
         <div className="absolute inset-0 z-0 flex justify-center items-center overflow-hidden">
           <img
             src="/student-bg.jpg"
             alt="Student Background"
             className="object-cover w-full h-full opacity-30 scale-150"
-            />
+          />
         </div>
 
         <div className="z-10 text-center">
@@ -197,130 +200,133 @@ export default function Home() {
             NoteFlow Summarizer
           </h1>
         </div>
-      
 
-      <div className="z-10">
-      {!isLoggedIn ? (       
-        <div className="space-y-4 text-foreground text-sm md:text-base">
-          <input
-            type="email"
-            placeholder="Email"
-            aria-label="Email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            aria-label="Password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <div className="flex space-x-2">
-            <Button onClick={() => loginUser(email, password)}>Login</Button>
-            <Button variant="secondary" onClick={() => registerUser(email, password)}>
-              Register
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <>
-        <div className="space-y-6 md:space-y-8 z-10 w-full max-w-3xl">
-            <div className="text-foreground">
-              <p>Logged in as: {user?.email}</p>
+
+        <div className="z-10">
+          {!isLoggedIn ? (
+            <div className="space-y-4 text-foreground text-sm md:text-base">
+              <input
+                type="email"
+                placeholder="Email"
+                aria-label="Email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border p-2 rounded"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                aria-label="Password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border p-2 rounded"
+              />
+              <div className="flex space-x-2">
+                <Button onClick={() => loginUser(email, password)}>Login</Button>
+                <Button variant="secondary" onClick={() => registerUser(email, password)}>
+                  Register
+                </Button>
+              </div>
             </div>
-            <Card className="bg-card-background border border-border shadow-md">
-              <CardHeader>
-                <CardTitle className="text-lg md:text-2xl">Enter your note</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Paste your note here..."
-                  aria-label="Note Textarea"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  className="resize-none shadow-sm bg-card-foreground text-foreground"
-                />
-              </CardContent>
-            </Card>
+          ) : (
+            <>
+              <div className="space-y-6 md:space-y-8 z-10 w-full max-w-3xl">
+                <div className="text-foreground">
+                  <p>Logged in as: {user?.email}</p>
+                </div>
+                <Card className="bg-card-background border border-border shadow-md">
+                  <CardHeader>
+                    <CardTitle className="text-lg md:text-2xl">Enter your note</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      placeholder="Paste your note here..."
+                      aria-label="Note Textarea"
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      className="resize-none shadow-sm bg-card-foreground text-foreground"
+                    />
+                  </CardContent>
+                </Card>
 
-            <div className="flex justify-center">
-              <Button
-                aria-label="Summarize"
-                onClick={handleSummarize}
-                disabled={isSummarizing || !note}
-                className={`
+                <div className="flex justify-center">
+                  <Button
+                    aria-label="Summarize"
+                    onClick={handleSummarize}
+                    disabled={isSummarizing || !note}
+                    className={`
                   bg-accent
                   text-accent-foreground 
                   hover:bg-teal-700 
                   shadow-md
                   ${isSummarizing ? "cursor-wait" : "cursor-pointer"}
                 `}
-              >
-                {isSummarizing ? "Summarizing..." : "Summarize"}
-              </Button>
-            </div>
+                  >
+                    {isSummarizing ? "Summarizing..." : "Summarize"}
+                  </Button>
+                </div>
 
-            {summary && (
-              <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg md:text-2xl">Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                  <AnimatePresence>
-                    {summary && (
-                      <motion.div
-                        key="summary-content"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="whitespace-pre-line"
-                      >
-                        {summary}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                {summary && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg md:text-2xl">Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <AnimatePresence>
+                        {summary && (
+                          <motion.div
+                            key="summary-content"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.5 }}
+                            className="whitespace-pre-line"
+                          >
+                            {summary}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleCopyToClipboard}
-                      className="hover:bg-accent/10"
-                    >
-                      <Copy className="h-4 w-4" />
-                      <span className="sr-only">Copy to clipboard</span>
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={handleDownload}
-                      className="bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              )}
+                      <div className="flex justify-end space-x-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleCopyToClipboard}
+                          className="hover:bg-accent/10"
+                        >
+                          <Copy className="h-4 w-4" />
+                          <span className="sr-only">Copy to clipboard</span>
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={handleDownload}
+                          className="bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-          
-          <Button
-            aria-label="Logout"
-            onClick={logoutUser}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md"
-            
-          >
-            Logout
-          </Button>
+
+                <Button
+                  aria-label="Logout"
+                  onClick={logoutUser}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md"
+
+                >
+                  Logout
+                </Button>
+              </div>
+            </>
+          )}
         </div>
-        </>
-      )}
-    </div>
+        <Toaster />
+      </div>
+    </>
   );
 }
