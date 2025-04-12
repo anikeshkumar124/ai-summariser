@@ -1,5 +1,5 @@
 "use client";
-
+import { read } from "fs";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { summarizeNote } from "@/ai/flows/summarize-note";
@@ -16,6 +16,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { initializeApp, getApps } from "firebase/app";
+import * as pdfjs from 'pdfjs-dist';
 
 // Firebase configuration (replace with your own)
 const firebaseConfig = {
@@ -34,6 +35,7 @@ export default function Home() {
   const [note, setNote] = useState("");
   const [summary, setSummary] = useState("");
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -94,19 +96,21 @@ export default function Home() {
     }
   }
 
-  useEffect(() => {
-    let unsubscribe;
+    useEffect(() => {
+      let unsubscribe;
     if (auth) {
       unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
           setIsLoggedIn(true);
+          console.log("User logged in:", user.email);
         } else {
           setIsLoggedIn(false);
+          console.log("User logged out");
         }
       });
     } else {
       console.error("Auth object is not available.");
-    }
+    }    
     return () => {
       if (unsubscribe) unsubscribe();
     };
@@ -186,10 +190,53 @@ export default function Home() {
     }
   };
 
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === "application/pdf") {
+      setSelectedFile(file);
+      
+      try {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          if (reader.result instanceof ArrayBuffer) {
+            const pdfData = new Uint8Array(reader.result);
+            const pdf = await pdfjs.getDocument(pdfData).promise;
+            let fullText = "";
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const textContent = await page.getTextContent();
+              fullText += textContent.items.map(item => item.str).join(' ');
+            }
+
+            console.log('Extracted Text:', fullText);
+            setNote(fullText);
+            
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } catch (error:any) {
+        console.error('Error reading PDF:', error);
+        if (toast) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message || "Failed to read PDF.",
+          });
+        }
+      }
+    }
+  };
+
   const handleSummarize = async () => {
     setIsSummarizing(true);
     try {
-      const result = await summarizeNote({ note });
+      let textToSummarize = note;
+      if (selectedFile) {
+        console.log('Summarizing from uploaded file...');
+      }
+
+
+      const result = await summarizeNote({ note: textToSummarize });
       setSummary(result.summary || "Failed to Summarize");
       if (toast) {
         toast({
@@ -266,6 +313,16 @@ export default function Home() {
               <CardContent>
                 <Textarea
                   placeholder="Paste your note here..."
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className="resize-none shadow-sm"
+                />
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  id="pdf-upload"
+                  onChange={handleFileChange}
+                  className="mt-4"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   className="resize-none shadow-sm"
