@@ -27,55 +27,37 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Initialize Firebase app only once
+let app;
+try {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApps()[0];
+  }
+} catch (e: any) {
+  console.error('initializeApp-error', e);
+}
 
+// Initialize Firebase auth
+let auth;
+try {
+  if (app) {
+    auth = getAuth(app);
+  }
+} catch (e: any) {
+  console.error('getAuth-error', e);
+}
 
-// Home component
 export default function Home() {
   const [note, setNote] = useState("");
   const [summary, setSummary] = useState("");
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-
-  // Initialize Firebase
-  let app;
-  let auth;
-
-  useEffect(() => {
-    if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
-      if (!firebase.getApps().length) {
-        try {
-          app = firebase.initializeApp(firebaseConfig);
-          auth = getAuth(app);
-        } catch (error: any) {
-          console.error("Firebase initialization error:", error.message);
-          if (toast) {
-            toast({
-              variant: "destructive",
-              title: "Firebase Initialization Error",
-              description: error.message || "Failed to initialize Firebase.",
-            });
-          }
-        }
-      } else {
-        app = firebase.getApps()[0];
-        auth = getAuth(app);
-      }
-    } else {
-      console.error("Firebase configuration is not set.");
-      if (toast) {
-        toast({
-          variant: "destructive",
-          title: "Firebase Configuration Error",
-          description: "Firebase configuration is not set. Please configure Firebase environment variables.",
-        });
-      }
-    }
-  }, []);
 
   useEffect(() => {
     let unsubscribe;
@@ -83,10 +65,8 @@ export default function Home() {
       unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
           setIsLoggedIn(true);
-          console.log("User logged in:", user.email);
         } else {
           setIsLoggedIn(false);
-          console.log("User logged out");
         }
       });
     } else {
@@ -95,22 +75,7 @@ export default function Home() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [auth]);
-
-  useEffect(() => {
-    const loadPdfJs = async () => {
-      try {
-        const pdfjsLib = await import('pdfjs-dist');
-        // @ts-ignore
-        pdfjsLib.GlobalWorkerOptions.workerSrc = window.location.origin + '/pdf.worker.min.js';
-      } catch (error) {
-        console.error('Failed to load pdfjs-dist', error);
-      }
-    };
-
-    loadPdfJs();
   }, []);
-
 
   const registerUser = async (email, password) => {
     if (auth) {
@@ -189,11 +154,7 @@ export default function Home() {
   const handleSummarize = async () => {
     setIsSummarizing(true);
     try {
-      let textToSummarize = note;
-      if (selectedFile) {
-        console.log('Summarizing from uploaded file...');
-      }
-
+      const textToSummarize = note;
 
       const result = await summarizeNote({ note: textToSummarize });
       setSummary(result.summary || "Failed to Summarize");
